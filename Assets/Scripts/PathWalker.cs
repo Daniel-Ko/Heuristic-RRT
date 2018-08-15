@@ -10,8 +10,6 @@ public class PathWalker : MonoBehaviour {
 	void Start () {
 		NavMeshAgent agent = GetComponent<NavMeshAgent>();
 		agentLoc = agent.transform;
-
-		
 	}
 	
 	// Update is called once per frame
@@ -20,11 +18,14 @@ public class PathWalker : MonoBehaviour {
 	}
 
 	public void getWaypoints() {
+		NavMeshAgent agent = GetComponent<NavMeshAgent>();
+		agentLoc = agent.transform;
 		destinations.Add(RandomNavmeshLocation(200f));
 	}
 
 	public Vector3 RandomNavmeshLocation(float radius) {
          Vector3 randomDirection = Random.insideUnitSphere * radius;
+		 print(agentLoc);
          randomDirection += agentLoc.position;
          NavMeshHit hit;
          Vector3 finalPosition = Vector3.zero;
