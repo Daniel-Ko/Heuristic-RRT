@@ -20,10 +20,16 @@ public class PathWalker : MonoBehaviour {
 
 	public float timeToPathFade = 3.0f;
 
+	// Optimised Randomly-Exploring Random Tree 
 	PathNode root;
+
+	// Logging stats
 	int id = 1;
+	int boundariesMarked = 0;
 
 	void Start() {
+		InvokeRepeating("Log", 15.0f, 15.0f);
+
 		this.agent = GetComponent<NavMeshAgent>();
 		this.agentLoc = agent.transform;
 		agent.autoBraking = false;
@@ -50,29 +56,57 @@ public class PathWalker : MonoBehaviour {
          return finalPosition;
      }
 
-	void ExploreToNextPoint() {
+	 public Vector3 AimAwayFromNeighbourhood() {
 		Vector3 randPt = RandomNavmeshLocation(this.radiusToSample);
+		Vector3 newAngle = randPt;
 
+		float largestDistFromTree = 0;
+		Vector3 freshestAngle = randPt;
+
+		// Check 18 different angles around the clock for boundaries/free space
+		for(int i = 0; i < 18; i++) {
+			// Find closest node in tree to the random pt we have chosen
+			PathNode closestNode = root.ClosestNode(newAngle);
+
+			// Agent is closer to unexplored space than the tree is
+			float distFromTree = Vector3.Distance(closestNode.position, newAngle);
+			if(Vector3.Distance(this.agentLoc.position, newAngle) < 
+				distFromTree) {
+				return newAngle;
+			}
+			if(largestDistFromTree < distFromTree)
+				freshestAngle = newAngle;
+			// rotate clockwise by 40degrees
+			newAngle = Quaternion.Euler(20, 0, 0) * (newAngle - this.agentLoc.position) + 
+						this.agentLoc.position;
+		}
+		return freshestAngle;
+		
+
+	 }
+
+	void ExploreToNextPoint() {
 		this.agentLoc = this.agent.transform;
 		Vector3 currentPt = this.agentLoc.position;
 		
+		Vector3 target = AimAwayFromNeighbourhood();
+
 		int tries = 0;
-		// while(currentPt != randPt || tries < 3) {
-		print("Current: "+currentPt + " | Dest: " + randPt);
+		
 		// Find the closest node in the tree to that point
-		PathNode closestNode = root.ClosestNode(randPt);
-		print("Parent: " + closestNode.id);
+		PathNode closestNode = root.ClosestNode(target);
+		// print("Parent: " + closestNode.id);
 
 		// Check that the new point is a useful distance away (IMPROVES PATHFINDING)
-		float distToRandPt = Vector3.Distance(closestNode.position, randPt);
-		if(distToRandPt < usefulDist)
+		float distToTarget = Vector3.Distance(closestNode.position, target);
+		if(distToTarget < usefulDist)
 			return;
 		
 		// Test for boundaries by raycasting in that direction.
-		ScanForBoundaries(randPt);
+		target = ScanForBoundaries(target);
 
 		// Now that we know the point is not out of bounds, we get the coords
-		Vector3 newPos = Vector3.MoveTowards(closestNode.position, randPt, this.deltaToTryMove);
+		Vector3 newPos = Vector3.MoveTowards(closestNode.position, target, this.deltaToTryMove);
 		
 		// And move the agent towards the goal
 		this.impulser.GoToNextPoint(this.agent, newPos);
@@ -91,11 +125,9 @@ public class PathWalker : MonoBehaviour {
 
 			
 
-			currentPt = newPos;
-			tries++;
-			
-		// }
-		tries = 0;
+		currentPt = newPos;
+		tries++;
+	
 	}
 
 	void Update() {
@@ -116,13 +148,6 @@ public class PathWalker : MonoBehaviour {
 		if(trail == null) {
 			this.trail = this.gameObject.AddComponent<TrailRenderer>();
 		}
-		// float alpha = 1.0f;
-		// Gradient gradient = new Gradient();
-		// gradient.SetKeys(
-		// 	new GradientColorKey[] { new GradientColorKey(Color.yellow, 0.0f), new GradientColorKey(Color.red, 1.0f) },
-		// 	new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
-		// );
-		// trail.colorGradient = gradient;
 	}
 
 	Vector3 ScanForBoundaries(Vector3 randPt) {
@@ -130,10 +155,8 @@ public class PathWalker : MonoBehaviour {
 		Vector3 newAngle = randPt;
 		Vector3 escapeVector = randPt;
 
-		Vector3 distanceToPt = randPt - this.agentLoc.position;
-
-		// Check 9 different angles around the clock for boundaries/free space
-		for(int i = 0; i < 9; i++) {
+		// Check 18 different angles around the clock for boundaries/free space
+		for(int i = 0; i < 18; i++) {
 			if(this.agent.Raycast(newAngle, out possibleBoundaryEdge)) {
 				Vector3 bot = possibleBoundaryEdge.position;
 				bot.y -= 5;
@@ -145,8 +168,8 @@ public class PathWalker : MonoBehaviour {
 				escapeVector = newAngle;
 			}
 			// rotate clockwise by 40degrees
-			distanceToPt = Quaternion.Euler(40, 0, 0) * distanceToPt;
-			newAngle = distanceToPt + this.agentLoc.position;
+			newAngle = Quaternion.Euler(20, 0, 0) * (newAngle - this.agentLoc.position) + 
+						this.agentLoc.position;
 		}
 
 		return escapeVector;
@@ -174,5 +197,10 @@ public class PathWalker : MonoBehaviour {
 		GUI.Label(new Rect(10, 200, 200, 30), "Radius");
 		radiusToSample = GUI.HorizontalSlider(new Rect(15, 220, 200, 30), radiusToSample, 10f, 300f);
     }
+
+	void Log() {
+		print((Time.time) + " sec elapsed.\nBoundaries Marked: " + this.boundariesMarked + 
+		"\nNodes created: " + this.id);
+	}
 
 }
