@@ -10,11 +10,14 @@ public class PathWalker : MonoBehaviour {
 	TrailRenderer trail;
 
 	public List<Vector3> destinations = new List<Vector3>();
-	public float radiusToSample = 300f;
+	public float radiusToSample = 20f;
 	public float deltaToTryMove = 5f;
 	public float agentSpeed = 80f;
 
-	public float timeToPathFade = 1.0f;
+	// Used to force points to spread out
+	public float usefulDist = 10f;
+
+	public float timeToPathFade = 3.0f;
 
 	PathNode root;
 	int id = 1;
@@ -56,8 +59,12 @@ public class PathWalker : MonoBehaviour {
 			// Find the closest node in the tree to that point
 			PathNode closestNode = root.ClosestNode(randPt);
 			print("Parent: " + closestNode.id);
-			// Go to neighbour and walk 5 m towards that point
-			
+
+			// Check that the new point is a useful distance away (IMPROVES PATHFINDING)
+			float distToRandPt = Vector3.Distance(closestNode.position, randPt);
+			if(distToRandPt < usefulDist)
+				return;
+
 			Vector3 newPos = Vector3.MoveTowards(closestNode.position, randPt, this.deltaToTryMove);
 			
 			// Move towards it
@@ -123,8 +130,8 @@ public class PathWalker : MonoBehaviour {
 	}
 
 	void OnGUI() {
-        GUI.Label(new Rect(10, 20, 200, 30), "Time");
-        timeToPathFade = GUI.HorizontalSlider(new Rect(15, 40, 200, 30), timeToPathFade, 0.1f, 20.0f);
+        GUI.Label(new Rect(10, 20, 200, 30), "FadeTime");
+        timeToPathFade = GUI.HorizontalSlider(new Rect(15, 40, 200, 30), timeToPathFade, 0.1f, 100f);
 
 		GUI.Label(new Rect(275, 20, 200, 30), "DeltaToSample");
 		deltaToTryMove = GUI.HorizontalSlider(new Rect(280, 40, 200, 30), deltaToTryMove, 1f, 100f);
