@@ -28,9 +28,11 @@ public class PathWalker : MonoBehaviour {
 		root.setID("root");
 	}
 
-	public void getWaypoints() {
-		NavMeshAgent agent = GetComponent<NavMeshAgent>();
+	public void getWaypoints(NavMeshAgent ag) {
+		this.agent = ag;
 		agentLoc = agent.transform;
+		agent.autoBraking = false;
+		agent.speed = this.agentSpeed;
 
 		root = new PathNode(null, agentLoc.position);
 		root.setID("root");
@@ -50,33 +52,36 @@ public class PathWalker : MonoBehaviour {
          return finalPosition;
      }
 
-	 
 	void FillTree() {
 		for(int i = 0; i < 100; i++) {
 			// Pick random point in the map
 			Vector3 randPt = RandomNavmeshLocation(300f);
+			Vector3 currentPos = this.agent.transform.position;
+			print("Current: "+currentPos + " | Dest: " + randPt);
+			// while(currentPos != randPt) {
+				// Find the closest node in the tree to that point
+				PathNode closestNode = root.ClosestNode(randPt);
+				// print("Parent: " + closestNode.id);
+				// Go to neighbour and walk 5 m towards that point
+				destinations.Add(closestNode.position);
+				Vector3 newPos = Vector3.MoveTowards(closestNode.position, randPt, this.deltaToTryMove);
+				destinations.Add(newPos);
+				// If we aren't at the random point, add this new point to the tree as a node (via closestNode)
+				PathNode newSample = new PathNode(closestNode, newPos);
 
-			// Find the closest node in the tree to that point
-			PathNode closestNode = root.ClosestNode(randPt);
-			print("Parent: " + closestNode.id);
-			// Go to neighbour and walk 5 m towards that point
-			destinations.Add(closestNode.position);
-			Vector3 newPos = Vector3.MoveTowards(closestNode.position, randPt, this.deltaToTryMove);
-			destinations.Add(newPos);
-			// If we aren't at the random point, add this new point to the tree as a node (via closestNode)
-			PathNode newSample = new PathNode(closestNode, newPos);
+				newSample.setID(this.id.ToString());
+				this.id++;
 
-			newSample.setID(this.id.ToString());
-			this.id++;
+				closestNode.children.Add(newSample);
+				// print("\tNew sample: " + newSample.id);
 
-			closestNode.children.Add(newSample);
-			print("\tNew sample: " + newSample.id);
+				currentPos = newPos;
+			// }
 		}
 	}
 
 	void TravelToNextPoint() {
-		Vector3 randPt = RandomNavmeshLocation(300f);
-
+		Vector3 randPt = RandomNavmeshLocation(this.radiusToSample);
 		while(agent.transform.position != randPt) {
 			// Find the closest node in the tree to that point
 			PathNode closestNode = root.ClosestNode(randPt);
@@ -97,13 +102,13 @@ public class PathWalker : MonoBehaviour {
 			print("\tNew sample: " + newSample.id);
 
 			// Move towards it
-			this.impulser.GoToNextPoint(this.agent, newSample.position);
+			// this.impulser.GoToNextPoint(this.agent, newSample.position);
 		}
 	}
 
-	void Update() {
-		if (!agent.pathPending) //&& agent.remainingDistance < 0.5f
-            TravelToNextPoint();
-	}
+	// void Update() {
+	// 	if (!agent.pathPending) //&& agent.remainingDistance < 0.5f
+    //         TravelToNextPoint();
+	// }
 
 }
