@@ -5,26 +5,29 @@ using UnityEngine.AI;
 
 public class MoveTo : MonoBehaviour {
 	public List<Vector3> destinations;
-	// public Transform goal;
+	int nextPointIndex = 0;
        
 	void Start () {
-		NavMeshAgent agent = GetComponent<NavMeshAgent>();
-
+		
 		
 		PathWalker walker = GetComponent<PathWalker>();
-		walker.getWaypoints();
+		// walker.getWaypoints();
 		
-		destinations = walker.destinations;
-		print(destinations[0]);
+		// this.destinations = walker.destinations;
+		
 		// agent.destination = goal.position; 
-		agent.destination = destinations[0];
-	}
-
-	void fillTree() {
+		// agent.destination = destinations[0];
 
 	}
 
-	void calculateDestination() {
+	public void GoToNextPoint(NavMeshAgent agent, Vector3 destination) {
+		// if(this.destinations.Count == 0) 
+		// 	return;
+		
+		// agent.destination = this.destinations[nextPointIndex];
+		agent.destination = destination;
+		// nextPointIndex = (nextPointIndex + 1) % destinations.Count;
 
+		// print(agent.destination);
 	}
 }
