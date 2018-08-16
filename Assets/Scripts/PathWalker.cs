@@ -10,6 +10,7 @@ public class PathWalker : MonoBehaviour {
 	TrailRenderer trail;
 
 	public List<Vector3> destinations = new List<Vector3>();
+	public List<Vector3> boundaries = new List<Vector3>();
 	public float radiusToSample = 20f;
 	public float deltaToTryMove = 5f;
 	public float agentSpeed = 80f;
@@ -52,34 +53,41 @@ public class PathWalker : MonoBehaviour {
 	void ExploreToNextPoint() {
 		Vector3 randPt = RandomNavmeshLocation(this.radiusToSample);
 
-		Vector3 currentPt = agent.transform.position;
+		this.agentLoc = this.agent.transform;
+		Vector3 currentPt = this.agentLoc.position;
+		
 		int tries = 0;
 		// while(currentPt != randPt || tries < 3) {
-			print("Current: "+currentPt + " | Dest: " + randPt);
-			// Find the closest node in the tree to that point
-			PathNode closestNode = root.ClosestNode(randPt);
-			print("Parent: " + closestNode.id);
+		print("Current: "+currentPt + " | Dest: " + randPt);
+		// Find the closest node in the tree to that point
+		PathNode closestNode = root.ClosestNode(randPt);
+		print("Parent: " + closestNode.id);
 
-			// Check that the new point is a useful distance away (IMPROVES PATHFINDING)
-			float distToRandPt = Vector3.Distance(closestNode.position, randPt);
-			if(distToRandPt < usefulDist)
-				return;
+		// Check that the new point is a useful distance away (IMPROVES PATHFINDING)
+		float distToRandPt = Vector3.Distance(closestNode.position, randPt);
+		if(distToRandPt < usefulDist)
+			return;
+		
+		// Test for boundaries by raycasting in that direction.
+		ScanForBoundaries(randPt);
 
-			Vector3 newPos = Vector3.MoveTowards(closestNode.position, randPt, this.deltaToTryMove);
-			
-			// Move towards it
-			this.impulser.GoToNextPoint(this.agent, newPos);
+		// Now that we know the point is not out of bounds, we get the coords
+		Vector3 newPos = Vector3.MoveTowards(closestNode.position, randPt, this.deltaToTryMove);
+		
+		// And move the agent towards the goal
+		this.impulser.GoToNextPoint(this.agent, newPos);
 
-			// If we aren't at the random point, add this new point to the tree as a node (via closestNode)
-			PathNode newSample = new PathNode(closestNode, newPos);
+		// If our move towards the point timed out, 
+		// add where we ended up to the tree as a node (via closestNode)
+		PathNode newSample = new PathNode(closestNode, newPos);
 
-			// "Name" the new child for debugging
-			newSample.setID(this.id.ToString());
-			this.id++;
+		// "Name" the new child for debugging
+		newSample.setID(this.id.ToString());
+		this.id++;
 
-			// Add it to the family as a child of closest node found
-			closestNode.children.Add(newSample);
-			destinations.Add(newPos);
+		// And introduce it to the family as a child of closest node found
+		closestNode.children.Add(newSample);
+		destinations.Add(newPos);
 
 			
 
@@ -115,6 +123,33 @@ public class PathWalker : MonoBehaviour {
 		// 	new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
 		// );
 		// trail.colorGradient = gradient;
+	}
+
+	Vector3 ScanForBoundaries(Vector3 randPt) {
+		NavMeshHit possibleBoundaryEdge;
+		Vector3 newAngle = randPt;
+		Vector3 escapeVector = randPt;
+
+		Vector3 distanceToPt = randPt - this.agentLoc.position;
+
+		// Check 9 different angles around the clock for boundaries/free space
+		for(int i = 0; i < 9; i++) {
+			if(this.agent.Raycast(newAngle, out possibleBoundaryEdge)) {
+				Vector3 bot = possibleBoundaryEdge.position;
+				bot.y -= 5;
+				Vector3 top = possibleBoundaryEdge.position;
+				top.y += 5;
+				Debug.DrawLine(bot, top, Color.red, Mathf.Infinity);
+
+			} else {
+				escapeVector = newAngle;
+			}
+			// rotate clockwise by 40degrees
+			distanceToPt = Quaternion.Euler(40, 0, 0) * distanceToPt;
+			newAngle = distanceToPt + this.agentLoc.position;
+		}
+
+		return escapeVector;
 	}
 
 	void TrailDraw() {

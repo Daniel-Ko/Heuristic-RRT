@@ -27,15 +27,12 @@ public class PathNode {
 		PathNode lowest = this;
 
 		float distToPoint = Vector3.Distance(this.position, randPt);
-		// Debug.Log("\t\t" +this.id + " has dist: " + distToPoint);
 		foreach(PathNode c in children) {
 			PathNode closestChild = c.ClosestNode(randPt);
-			// Debug.Log("\t\t" +closestChild.id + " has dist: " + Vector3.Distance(closestChild.position, randPt));
 			if(Vector3.Distance(closestChild.position, randPt) < distToPoint) {
 				lowest = closestChild;
 			}
 		}
-		Debug.Log("\tFinally chose: "+lowest.id);
 		return lowest;
 	}
 }
