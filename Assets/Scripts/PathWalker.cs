@@ -74,8 +74,8 @@ public class PathWalker : MonoBehaviour {
 				return newAngle;
 			} 
 			
-			// if(largestDistFromTree < distFromTree)
-			if(freshestNode.Depth() > closestNode.Depth()) {
+			if(largestDistFromTree < distFromTree) {
+			// if(freshestNode.Depth() > closestNode.Depth()) {
 				freshestAngle = newAngle;
 				freshestNode = closestNode;
 			}
@@ -135,7 +135,7 @@ public class PathWalker : MonoBehaviour {
 	}
 
 	void Update() {
-		if (!agent.pathPending) { //&& agent.remainingDistance < 0.5f
+		if (!agent.pathPending) { 
             ExploreToNextPoint();
 			TrailDraw();
 		}
