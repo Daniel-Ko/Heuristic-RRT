@@ -56,12 +56,12 @@ public class PathWalker : MonoBehaviour {
          return finalPosition;
      }
 
-	 public Vector3 AimAwayFromNeighbourhood() {
-		Vector3 randPt = RandomNavmeshLocation(this.radiusToSample);
+	 public Vector3 AimAwayFromNeighbourhood(Vector3 randPt) {
 		Vector3 newAngle = randPt;
 
 		float largestDistFromTree = 0;
-		Vector3? freshestAngle = null;
+		PathNode freshestNode = root;
+		Vector3 freshestAngle = randPt;
 
 		// Check 18 different angles around the clock for boundaries/free space
 		for(int i = 0; i < 18; i++) {
@@ -70,12 +70,16 @@ public class PathWalker : MonoBehaviour {
 
 			// Agent is closer to unexplored space than the tree is
 			float distFromTree = Vector3.Distance(closestNode.position, newAngle);
-			if(Vector3.Distance(this.agentLoc.position, newAngle) < 
-				distFromTree) {
+			if(Vector3.Distance(this.agentLoc.position, newAngle) < distFromTree) {
 				return newAngle;
-			}
-			if(largestDistFromTree < distFromTree)
+			} 
+			
+			// if(largestDistFromTree < distFromTree)
+			if(freshestNode.Depth() > closestNode.Depth()) {
 				freshestAngle = newAngle;
+				freshestNode = closestNode;
+			}
+
 			// rotate clockwise by 40degrees
 			newAngle = Quaternion.Euler(20, 0, 0) * (newAngle - this.agentLoc.position) + 
 						this.agentLoc.position;
@@ -88,8 +92,8 @@ public class PathWalker : MonoBehaviour {
 	void ExploreToNextPoint() {
 		this.agentLoc = this.agent.transform;
 		Vector3 currentPt = this.agentLoc.position;
-		
-		Vector3 target = AimAwayFromNeighbourhood();
+	
+		Vector3 target = AimAwayFromNeighbourhood(RandomNavmeshLocation(this.radiusToSample));
 
 		int tries = 0;
 		
