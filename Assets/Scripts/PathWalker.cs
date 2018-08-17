@@ -150,10 +150,16 @@ public class PathWalker : MonoBehaviour {
 		}
 	}
 
+	//360 scan and mark boundaries while also recording escape routes just in case we are in a corner
 	Vector3 ScanForBoundaries(Vector3 randPt) {
+
+		// Base Case to make sure the tightening of the radius is not too small (see end of function)
+		if (Vector3.Distance(this.agentLoc.position, randPt) <= 2f)
+			return randPt;
+		
 		NavMeshHit possibleBoundaryEdge;
 		Vector3 newAngle = randPt;
-		Vector3 escapeVector = randPt;
+		Vector3? escapeVector = null;
 
 		// Check 18 different angles around the clock for boundaries/free space
 		for(int i = 0; i < 18; i++) {
@@ -163,8 +169,9 @@ public class PathWalker : MonoBehaviour {
 				Vector3 top = possibleBoundaryEdge.position;
 				top.y += 5;
 				Debug.DrawLine(bot, top, Color.red, Mathf.Infinity);
-
+				boundariesMarked++;
 			} else {
+				// free zone found
 				escapeVector = newAngle;
 			}
 			// rotate clockwise by 40degrees
@@ -172,7 +179,11 @@ public class PathWalker : MonoBehaviour {
 						this.agentLoc.position;
 		}
 
-		return escapeVector;
+		// if no free zone found, tighten the search radius and try again
+		if(!escapeVector.HasValue) {
+			return ScanForBoundaries(Vector3.Lerp(this.agentLoc.position, randPt, 0.5f));
+		}
+		return (Vector3) escapeVector;
 	}
 
 	void TrailDraw() {
@@ -194,13 +205,12 @@ public class PathWalker : MonoBehaviour {
 		GUI.Label(new Rect(275, 20, 200, 30), "DeltaToSample");
 		deltaToTryMove = GUI.HorizontalSlider(new Rect(280, 40, 200, 30), deltaToTryMove, 1f, 100f);
 
-		GUI.Label(new Rect(10, 200, 200, 30), "Radius");
-		radiusToSample = GUI.HorizontalSlider(new Rect(15, 220, 200, 30), radiusToSample, 10f, 300f);
+		// GUI.Label(new Rect(10, 200, 200, 30), "Radius");
+		// radiusToSample = GUI.HorizontalSlider(new Rect(15, 220, 200, 30), radiusToSample, 10f, 300f);
     }
 
 	void Log() {
-		print((Time.time) + " sec elapsed.\nBoundaries Marked: " + this.boundariesMarked + 
-		"\nNodes created: " + this.id);
+		print((Time.time) + " sec elapsed.\nBoundaries Marked: " + this.boundariesMarked + "\nNodes created: " + this.id);
 	}
 
 }
