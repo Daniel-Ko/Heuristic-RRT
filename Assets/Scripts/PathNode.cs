@@ -35,4 +35,17 @@ public class PathNode {
 		}
 		return lowest;
 	}
+
+	public int Depth() {
+		if(children.Count == 0) {
+			return 0;
+		}
+
+		int lowestDepth = 1;
+
+		foreach(PathNode c in children) {
+			lowestDepth = Math.Max(lowestDepth, c.Depth());
+		}
+		return lowestDepth;
+	}
 }

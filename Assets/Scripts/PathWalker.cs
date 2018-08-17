@@ -61,7 +61,7 @@ public class PathWalker : MonoBehaviour {
 		Vector3 newAngle = randPt;
 
 		float largestDistFromTree = 0;
-		Vector3 freshestAngle = randPt;
+		Vector3? freshestAngle = null;
 
 		// Check 18 different angles around the clock for boundaries/free space
 		for(int i = 0; i < 18; i++) {
