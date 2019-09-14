@@ -1,13 +1,10 @@
-COMP313
-Daniel Ko
-Assignment 1
 
 # **Optimised Randomly-Exploring Random Tree**
 
-## **Demo**:
+## **Demo**:  
+[1: Starts its journey off briskly, moving towards unexplored directions](https://www.youtube.com/watch?v=S1Nvf0foQG4)  
+[2: Stuck in an explored neighborhood and tries to get out by expanding search range](https://www.youtube.com/watch?v=w4I2DR7xQPE)  
 
-https://www.youtube.com/watch?v=w4I2DR7xQPE
-https://www.youtube.com/watch?v=S1Nvf0foQG4
 
 ## **Description**
 
